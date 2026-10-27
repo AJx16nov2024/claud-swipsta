@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">EarbudSwipe</string>
+    <string name="accessibility_service_label">EarbudSwipe Automation Service</string>
+    <string name="accessibility_service_desc">Dispatches vertical swipe gestures when Bluetooth earbud media buttons are pressed, allowing hands-free navigation in Instagram Reels. This service does not read text, passwords, or personal data.</string>
+</resources>
