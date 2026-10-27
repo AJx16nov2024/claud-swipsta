@@ -73,11 +73,26 @@ class EarbudSwipeAccessibilityService : AccessibilityService() {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
                 val pkg = event.packageName?.toString()
-                if (!pkg.isNullOrBlank()) {
+                if (!pkg.isNullOrBlank() && pkg != "com.android.systemui") {
                     currentForegroundPackage = pkg
                 }
             }
         }
+    }
+
+    /**
+     * Reads the package of the currently active window (package name only, no content is read).
+     * Falls back to the last window-change event if the live lookup fails.
+     */
+    private fun resolveForegroundPackage(): String {
+        try {
+            val live = rootInActiveWindow?.packageName?.toString()
+            if (!live.isNullOrBlank() && live != "com.android.systemui") {
+                currentForegroundPackage = live
+            }
+        } catch (_: Exception) {
+        }
+        return currentForegroundPackage
     }
 
     override fun onInterrupt() {
@@ -120,7 +135,7 @@ class EarbudSwipeAccessibilityService : AccessibilityService() {
         }
 
         // Evaluate foreground app
-        val appEval = appDetector.evaluate(currentForegroundPackage)
+        val appEval = appDetector.evaluate(resolveForegroundPackage())
         if (!appEval.isTargetActive) {
             if (settings.debugLogging) {
                 EventLogger.log(
@@ -149,7 +164,7 @@ class EarbudSwipeAccessibilityService : AccessibilityService() {
         val decision = commandDetector.processKeyEvent(event)
         if (!decision.accepted) return
 
-        val appEval = appDetector.evaluate(currentForegroundPackage)
+        val appEval = appDetector.evaluate(resolveForegroundPackage())
         if (!appEval.isTargetActive) {
             EventLogger.log(
                 event = "MEDIA_SESSION_IGNORED_NON_TARGET",
