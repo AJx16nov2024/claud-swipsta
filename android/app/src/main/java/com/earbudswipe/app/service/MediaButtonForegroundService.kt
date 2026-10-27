@@ -95,7 +95,7 @@ class MediaButtonForegroundService : Service() {
             EventLogger.log(
                 event = "MEDIA_SESSION_ACTIVATED",
                 source = "MEDIA_SESSION",
-                details = "Active: ${mediaSession?.isActive}, " +
+                details = "Media session activation requested. " +
                     "Accessibility running: ${EarbudSwipeAccessibilityService.isServiceRunning()}",
                 targetPackage = EarbudSwipeAccessibilityService.currentForegroundPackage,
                 accepted = true
