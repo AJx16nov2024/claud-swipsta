@@ -156,28 +156,64 @@ class EarbudSwipeAccessibilityService : AccessibilityService() {
     }
 
     fun handleExternalMediaKeyEvent(event: KeyEvent) {
-        val repo = (application as EarbudSwipeApp).settingsRepository
-        val settings = repo.settings.value
-
-        if (!settings.automationEnabled) return
-
+        val settings = (application as EarbudSwipeApp)
+            .settingsRepository.settings.value
+    
+        EventLogger.log(
+            event = "MEDIA_KEY_RECEIVED",
+            source = "MEDIA_SESSION_CALLBACK",
+            details = "KeyCode=${event.keyCode}, action=${event.action}, " +
+                "automationEnabled=${settings.automationEnabled}",
+            targetPackage = resolveForegroundPackage(),
+            accepted = true
+        )
+    
+        if (!settings.automationEnabled) {
+            EventLogger.log(
+                event = "MEDIA_KEY_REJECTED",
+                source = "MEDIA_SESSION_CALLBACK",
+                details = "Automation is disabled",
+                targetPackage = resolveForegroundPackage(),
+                accepted = false,
+                rejectionReason = "AUTOMATION_DISABLED"
+            )
+            return
+        }
+    
         val decision = commandDetector.processKeyEvent(event)
-        if (!decision.accepted) return
-
-        val appEval = appDetector.evaluate(resolveForegroundPackage())
+    
+        if (!decision.accepted) {
+            EventLogger.log(
+                event = "MEDIA_KEY_REJECTED",
+                source = "MEDIA_SESSION_CALLBACK",
+                details = "KeyCode=${event.keyCode}: ${decision.reason}",
+                targetPackage = resolveForegroundPackage(),
+                accepted = false,
+                rejectionReason = decision.reason
+            )
+            return
+        }
+    
+        val foregroundPackage = resolveForegroundPackage()
+        val appEval = appDetector.evaluate(foregroundPackage)
+    
         if (!appEval.isTargetActive) {
             EventLogger.log(
                 event = "MEDIA_SESSION_IGNORED_NON_TARGET",
                 source = "MEDIA_SESSION_CALLBACK",
-                details = "Foreground: $currentForegroundPackage (${appEval.reason})",
-                targetPackage = currentForegroundPackage,
+                details = "Foreground: $foregroundPackage (${appEval.reason})",
+                targetPackage = foregroundPackage,
                 accepted = false,
                 rejectionReason = appEval.reason
             )
             return
         }
-
-        triggerGestureForAction(decision.mappedAction, "MEDIA_SESSION_CALLBACK", decision.command?.name ?: "AVRCP")
+    
+        triggerGestureForAction(
+            decision.mappedAction,
+            "MEDIA_SESSION_CALLBACK",
+            decision.command?.name ?: "AVRCP"
+        )
     }
 
     fun triggerManualTest(action: GestureAction = GestureAction.SWIPE_NEXT_REEL) {

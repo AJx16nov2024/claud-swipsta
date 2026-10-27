@@ -25,6 +25,14 @@ class MediaButtonForegroundService : Service() {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification())
         setupMediaSession()
+    
+        EventLogger.log(
+            event = "MEDIA_SERVICE_CREATED",
+            source = "MEDIA_SESSION",
+            details = "Media button foreground service created",
+            targetPackage = EarbudSwipeAccessibilityService.currentForegroundPackage,
+            accepted = true
+        )
     }
 
     private fun setupMediaSession() {
@@ -83,6 +91,15 @@ class MediaButtonForegroundService : Service() {
             })
 
             isActive = true
+
+            EventLogger.log(
+                event = "MEDIA_SESSION_ACTIVATED",
+                source = "MEDIA_SESSION",
+                details = "Active: ${mediaSession?.isActive}, " +
+                    "Accessibility running: ${EarbudSwipeAccessibilityService.isServiceRunning()}",
+                targetPackage = EarbudSwipeAccessibilityService.currentForegroundPackage,
+                accepted = true
+            )
         }
     }
 
